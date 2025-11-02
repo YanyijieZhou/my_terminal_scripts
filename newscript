@@ -1,14 +1,14 @@
 # !/usr/bin/env bash
 # newscript - create a new script from a template
 # Usage: newscript [-t template] [-e] NAME [destdir]
-#   -t template : template filename under ~/scripts/templates (default: bash.sh)
+#   -t template : template filename under ~/scripts/templates (default: default.sh)
 #   -e          : open created file in $EDITOR
-# Example: newscript -t bash.sh my-backup ~/scripts/backup
+# Example: newscript -t default.sh my-backup ~/scripts/backup
 
 set -euo pipefail
 
 TEMPLATEDIR="${TEMPLATEDIR:-$HOME/ogoing/src/scripts/templates}"
-TEMPLATE="bash.sh"
+TEMPLATE="default.sh"
 OPEN_EDITOR=0
 
 while getopts ":t:e" opt; do
