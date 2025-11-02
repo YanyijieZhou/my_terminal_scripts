@@ -1,0 +1,87 @@
+# !/usr/bin/env bash
+# newscript - create a new script from a template
+# Usage: newscript [-t template] [-e] NAME [destdir]
+#   -t template : template filename under ~/scripts/templates (default: bash.sh)
+#   -e          : open created file in $EDITOR
+# Example: newscript -t bash.sh my-backup ~/scripts/backup
+
+set -euo pipefail
+
+TEMPLATEDIR="${TEMPLATEDIR:-$HOME/ogoing/src/scripts/templates}"
+TEMPLATE="bash.sh"
+OPEN_EDITOR=0
+
+while getopts ":t:e" opt; do
+  case ${opt} in
+    t) TEMPLATE="$OPTARG" ;;
+    e) OPEN_EDITOR=1 ;;
+    *) echo "Usage: newscript [-t template] [-e] NAME [destdir]" >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND -1))
+
+if [ $# -lt 1 ]; then
+  echo "Usage: newscript [-t template] [-e] NAME [destdir]" >&2
+  exit 1
+fi
+
+NAME="$1"
+DESTDIR="${2:-$HOME/scripts}"
+# If NAME is a path, split
+if [[ "$NAME" == */* ]]; then
+  DEST="$NAME"
+else
+  DEST="$DESTDIR/$NAME"
+fi
+
+# Ensure destination directory exists
+mkdir -p "$(dirname "$DEST")"
+
+TEMPLATEPATH="$TEMPLATEDIR/$TEMPLATE"
+if [ ! -f "$TEMPLATEPATH" ]; then
+  echo "Template not found: $TEMPLATEPATH" >&2
+  exit 2
+fi
+
+# Determine shebang default from template extension heuristics (optional)
+SHEBANG_LINE="$(head -n1 "$TEMPLATEPATH")"
+if [[ "$SHEBANG_LINE" =~ ^#! ]]; then
+  # keep the template shebang
+  :
+else
+  # default to bash if no shebang present
+  SHEBANG_LINE="#!/usr/bin/env bash"
+fi
+
+AUTHOR="${AUTHOR:-$(whoami)}"
+DATE="$(date +%F)"
+
+# If destination exists, avoid overwriting unless user confirms
+if [ -e "$DEST" ]; then
+  read -p "File $DEST exists — overwrite? [y/N] " confirm
+  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 3
+  fi
+fi
+
+# Do placeholder substitution
+# Use sed to replace placeholders like {{NAME}}, {{AUTHOR}}, {{DATE}}, {{SHEBANG}}
+# We also ensure the shebang is present as the first line.
+tmpfile="$(mktemp)"
+awk -v shebang="$SHEBANG_LINE" 'NR==1 && shebang!~/^!#/ { print shebang } { print }' "$TEMPLATEPATH" > "$tmpfile"
+
+sed -e "s|{{NAME}}|$NAME|g" \
+    -e "s|{{AUTHOR}}|$AUTHOR|g" \
+    -e "s|{{DATE}}|$DATE|g" \
+    -e "s|{{SHEBANG}}|$SHEBANG_LINE|g" \
+    "$tmpfile" > "$DEST"
+
+rm -f "$tmpfile"
+
+chmod +x "$DEST"
+echo "Created $DEST (executable)."
+
+if [ "$OPEN_EDITOR" -eq 1 ]; then
+  ${EDITOR:-${VISUAL:-vi}} "$DEST"
+fi
