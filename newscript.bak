@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# !/usr/bin/env bash
 # newscript - create a new script from a template
 # Usage: newscript [-t template] [-e] NAME [destdir]
 #   -t template : template filename under ~/scripts/templates (default: default.sh)
@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-TEMPLATEDIR="${TEMPLATEDIR:-$HOME/ongoing/src/scripts/templates}"
+TEMPLATEDIR="${TEMPLATEDIR:-$HOME/ogoing/src/scripts/templates}"
 TEMPLATE="default.sh"
 OPEN_EDITOR=0
 
@@ -26,7 +26,7 @@ if [ $# -lt 1 ]; then
 fi
 
 NAME="$1"
-DESTDIR="${2:-$HOME/ongoing/src/scripts}"
+DESTDIR="${2:-$HOME/scripts}"
 # If NAME is a path, split
 if [[ "$NAME" == */* ]]; then
   DEST="$NAME"
